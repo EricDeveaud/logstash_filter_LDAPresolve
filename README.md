@@ -69,7 +69,7 @@ we will get this output
  }
 ```
 
-## Usage
+# Usage
 
 ## 1 Installation
 
@@ -90,11 +90,11 @@ gem build logstash-filter-LDAPresolve.gemspec
 $LS_HOME/bin/plugin install ./logstash-filter-rest-0.1.0.gem
 ```
 
-## Configuration
+## 2 Configuration
 
 Add the following to the #filter# section of your logstash configuration 
 
-# 1 mandatory elements
+#### mandatory elements
 ```sh
 LDAPresolve {
     uidNumber  => 7225
@@ -104,7 +104,7 @@ LDAPresolve {
 }
 ```
 
-# 2 auxiliary arguments
+#### auxiliary arguments
 
 if your LDAP server use another port than the (339) default one 
 ```sh
@@ -148,7 +148,7 @@ Cache retention is set by default to 300 second. you can change the cache retent
    cache_interval => number_of_seconds 
 ```
 
-## Contributing
+# Contributing
 All contributions are welcome: ideas, patches, documentation, bug reports, complaints, usggestions ... 
 
 
