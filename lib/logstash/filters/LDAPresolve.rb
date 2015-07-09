@@ -4,12 +4,12 @@ require "logstash/namespace"
 
 # LDAPresolve filter will add to the event the fields 'login', 'user' and 'group' based on LDAP request 
 # with provided uidNumber information. 
-# and add LDAP_OK on success, otherwise  error tag s added to the event
-#    LDAP_ERR: some LDAP connection or schema error
-#    LDAP_UNK_USER: unknow uidNumber 
-#    LDAP_UNK_GROUP: unknow group 
+# and add LDAP_OK on success, otherwise  error tags are added to the event
+#   * LDAP_ERR: some LDAP connection or schema error
+#   * LDAP_UNK_USER: unknow uidNumber 
+#   * LDAP_UNK_GROUP: unknow group 
 #
-# This filter useby default LDAPS but can be configured to use plain LDAP.
+# This filter use by default LDAPS but can be configured to use plain LDAP.
 # you can select the protocol you want to use via the use_ssl config setting
 #
 # As all filters, this filter only processes 1 event at a time, so using this plugin can 
@@ -75,6 +75,7 @@ require "logstash/namespace"
 #    "some_infos" => 'foo bar"
 #          "user" => "John DOE"
 #         "group" => "nobody"
+#         "login" => "jdoe"  
 #  }
 
 class LogStash::Filters::LDAPresolve < LogStash::Filters::Base
@@ -145,12 +146,12 @@ class LogStash::Filters::LDAPresolve < LogStash::Filters::Base
         cacheUID(@uidNumber, login, user, group)
     end 
 
-    ##--- finaly change event to embed user and group information
+    ##--- finaly change event to embed login, user and group information
     event["user"] = res['user']
     event["group"] = res['group']
     event["login"] = res['login']
 
-    ##--- add LDAPresolve succes tag
+    ##--- add LDAPresolve exit tag, We can use this later to reparse+reindex logs if necessaryi.
     exitstatus = res['status']
     if event["tags"] 
         event["tags"] << exitstatus
@@ -165,7 +166,11 @@ class LogStash::Filters::LDAPresolve < LogStash::Filters::Base
 
   private
 
-  def cached?(uidNumber)
+  def cached?(uidNumber) 
+    # checks if pgiven uidNumber appear in the cache
+    # then check for time it resides on the cache. 
+    # if cache introdution time > cache_interval. claim that uidNumber is not cached to force 
+    # update by the caller .
     cached = @cache.fetch(uidNumber, false) 
     if cached and Time.now - cached[3] <= @cache_interval
         return cached[0], cached[1], cached[2]
@@ -174,6 +179,8 @@ class LogStash::Filters::LDAPresolve < LogStash::Filters::Base
   end
         
   def cacheUID(uidNumber, login, user, group)
+    # basic caching mechanism using a hash 
+    # caveats, no size control.
     @cache[uidNumber] = [login, user, group, Time.now]
   end 
 
