@@ -9,7 +9,7 @@ require "logstash/namespace"
 #    LDAP_UNK_USER: unknow uidNumber 
 #    LDAP_UNK_GROUP: unknow group 
 #
-# This filter useby default LDAPS but can be configure to use plain LDAP.
+# This filter useby default LDAPS but can be configured to use plain LDAP.
 # you can select the protocol you want to use via the use_ssl config setting
 #
 # As all filters, this filter only processes 1 event at a time, so using this plugin can 
@@ -30,32 +30,61 @@ require "logstash/namespace"
 #    group attributes: 'dn'
 #
 # If uidNumber is not found in LDAP, for user and group are set to default values, eg: Unknown
+#
+#
+# configure this filter from your Logstash filter config.
+# [source, ruby] 
+# filter {
+#   LDAPresolve {
+#     uidNumber  => uidNumber to resolve
+#     host       => "my.LDAP.Server" 
+#     userdn     => "Domain Name to search for users information"
+#     groupdn    => "Domain Name to search for group information"
+#     ldap_port  => LDAP Server port (Default: 389)
+#     ldaps_port => LDAPS Server port (Default: 636)
+#     use_ssl    => boolean (Default: true)
+#     username   => "username to log on LDAP server" (Default '')
+#     password   => "password to log on the LDAP server" Default '')
+#   }
+# }
+#
+# Example
+#
+# assume we have on LDAPS (with no authent) an user John DOE with uidNumber 25377 that pertains to group nobody
+# For example with following envent structure.
+#  {
+#      "@version" => "1",
+#    "@timestamp" => "2015-06-29:00:00.000Z",
+#    "some_infos" => 'foo bar"
+#  }
+#
+# and the following init configuration 
+#
+# LDAPresolve {
+#     uidNumber => 25377
+#     host      => "ldaps.pasteur.fr"
+#     userdn    => "ou=utilisateurs,dc=pasteur,dc=fr"
+#     groupdn   => "ou=entites,ou=groupes,dc=pasteur,dc=fr"
+# }
+# 
+# we will get this output
+#
+#  {
+#      "@version" => "1",
+#    "@timestamp" => "2015-06-29:00:00.000Z",
+#    "some_infos" => 'foo bar"
+#          "user" => "John DOE"
+#         "group" => "nobody"
+#  }
 
 class LogStash::Filters::LDAPresolve < LogStash::Filters::Base
 
-  # configure this filter from your Logstash config.
-  #
-  # filter {
-  #   LDAPresolve {
-  #     uidNumber  => uidNumber to resolve
-  #     host       => "my.LDAP.Server" 
-  #     userdn     => "Domain Name to search for users information"
-  #     groupdn    => "Domain Name to search for group information"
-  #     ldap_port  => LDAP Server port (Default: 389)
-  #     ldaps_port => LDAPS Server port (Default: 636)
-  #     use_ssl    => boolean (Default: true)
-  #     username   => "username to log on LDAP server" (Default '')
-  #     password   => "password to log on the LDAP server" Default '')
-  #   }
-  # }
-  #
   config_name "LDAPresolve"
 
   # uidNumber to resolve.
   config :uidNumber, :validate => :number, :required => true
 
   ##--- LDAP server specific configuration
-
   # LDAP host name
   config :host, :validate => :string, :required => true
   # LDAP//LDAPS port
@@ -75,39 +104,10 @@ class LogStash::Filters::LDAPresolve < LogStash::Filters::Base
   config :groupattrs, :validate => :array, :required => false, :default => ['dn']
 
   ##--- cache settings true//false and time of cache renewal in sec
-
   # shall we use caching true//false
   config :useCache, :validate => :boolean, :required => false, :default => true
   # cache persistence in second.
   config :cache_interval, :validate => :number, :required => false, :default => 300
-
-  # assume we have on LDAPS (with no authent) an user John DOE with uidNumber 25377 that pertains to group nobody
-  # For example with following envent structure.
-  #  {
-  #      "@version" => "1",
-  #    "@timestamp" => "2015-06-29:00:00.000Z",
-  #    "some_infos" => 'foo bar"
-  #  }
-  #
-  # and the following init configuration 
-  #
-  # LDAPresolve {
-  #     uidNumber => 25377
-  #     host      => "ldaps.pasteur.fr"
-  #     userdn    => "ou=utilisateurs,dc=pasteur,dc=fr"
-  #     groupdn   => "ou=entites,ou=groupes,dc=pasteur,dc=fr"
-  # }
-  # 
-  # we will get this output
-  #
-  #  {
-  #      "@version" => "1",
-  #    "@timestamp" => "2015-06-29:00:00.000Z",
-  #    "some_infos" => 'foo bar"
-  #          "user" => "John DOE"
-  #         "group" => "nobody"
-  #  }
-  #
 
   
   public
@@ -123,7 +123,7 @@ class LogStash::Filters::LDAPresolve < LogStash::Filters::Base
   public
   def filter(event)
 
-    ## first check cache for provided uidNumber
+    ##--- first check cache for provided uidNumber
     cached = false
     if @useCache
         cached = cached?(@uidNumber) 
