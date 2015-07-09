@@ -39,29 +39,33 @@ It is fully free and fully open source. The license is Apache 2.0, meaning you a
 
 assume we have on LDAPS (with no authent) an user John DOE with uidNumber 25377 that pertains to group nobody
 For example with following envent structure.
+``` 
  {
      "@version" => "1",
    "@timestamp" => "2015-06-29:00:00.000Z",
    "some_infos" => 'foo bar"
  }
+```
 
 and the following init configuration 
-
+``` 
 LDAPresolve {
     uidNumber => 25377
     host      => "ldaps.pasteur.fr"
     userdn    => "ou=utilisateurs,dc=pasteur,dc=fr"
     groupdn   => "ou=entites,ou=groupes,dc=pasteur,dc=fr"
 }
+```
 
 we will get this output
-
+```
  {
      "@version" => "1",
    "@timestamp" => "2015-06-29:00:00.000Z",
    "some_infos" => 'foo bar"
          "user" => "John DOE"
         "group" => "nobody"
+        "login" => "jdoe"
  }
-
+```
 
