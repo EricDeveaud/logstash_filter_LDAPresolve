@@ -6,7 +6,7 @@ It is fully free and fully open source. The license is Apache 2.0, meaning you a
 
 ## Documentation
 
- LDAPresolve filter will add to the event the fields 'login', 'user' and 'group' based on LDAP request 
+LDAPresolve filter will add to the event the fields 'login', 'user' and 'group' based on LDAP request 
  with provided uidNumber information. 
  and add LDAP_OK on success, otherwise  error tag s added to the event
     LDAP_ERR: some LDAP connection or schema error
@@ -68,4 +68,89 @@ we will get this output
         "login" => "jdoe"
  }
 ```
+
+## Usage
+
+## 1 Installation
+
+You can use the built-in plugin tool from Logstash to install the filter from https://rubygems.org/gems/logstash-filter-LDAPresolve
+
+```
+$LS_HOME/bin/plugin install logstash-filter-LDAPresolve
+```
+
+Or you can build it yourself:
+
+```
+git clone https://github.com/EricDeveaud/logstash_filter_LDAPresolve
+cd logstash_filter_LDAPresolve
+bundle install
+bundle exec rspec
+gem build logstash-filter-LDAPresolve.gemspec
+$LS_HOME/bin/plugin install ./logstash-filter-rest-0.1.0.gem
+```
+
+## Configuration
+
+Add the following to the #filter# section of your logstash configuration 
+
+# 1 mandatory elements
+```sh
+LDAPresolve {
+    uidNumber  => 7225
+    host       => "ldap.somewhere.org"
+    userdn     => "ou=users,dc=somewhere,dc=org"
+    groupdn    => "ou=groups,dc=somewhere,dc=org"
+}
+```
+
+# 2 auxiliary arguments
+
+if your LDAP server use another port than the (339) default one 
+```sh
+    ldap_port  => 1234
+```
+
+if your LDAPS server use another port than the (636) default one 
+```sh
+   ldaps_port  => 1234
+```
+
+if you use a login//passord to log to your LDAP server
+```sh
+   username    => "some_loggin"
+   passord     => "secretPassword"
+```
+
+if your LDAP use some specific attributes you can specify them for the filtering request
+```sh
+   userattrs   => ['attr1', 'attr2', ..] 
+   groupattrs  => ['attr1', 'attr2', ..]
+```
+
+defaut atributes used by LDAPresolve are the following:
+```sh
+   userattrs => ['uid', 'gidNumber', 'givenName', 'sn'] that suits the posix account definitions.
+   groupattrs  => ['dn']
+```
+
+## 3 Cache or not cache
+
+LDAPresolve uses a basic cache mechanism by default. This cache mechanism can be disabled using the following configuration options
+
+```sh
+   usecache    => false
+```
+
+Cache retention is set by default to 300 second. you can change the cache retention duration using the following configuration options
+
+```sh
+   cache_interval => number_of_seconds 
+```
+
+## Contributing
+All contributions are welcome: ideas, patches, documentation, bug reports, complaints, usggestions ... 
+
+
+
 
