@@ -83,7 +83,7 @@ class LogStash::Filters::LDAPresolve < LogStash::Filters::Base
   config_name "LDAPresolve"
 
   # uidNumber to resolve.
-  config :uidNumber, :validate => :number, :required => true
+  config :uidNumber, :validate => :string, :required => true
 
   ##--- LDAP server specific configuration
   # LDAP host name
@@ -123,7 +123,7 @@ class LogStash::Filters::LDAPresolve < LogStash::Filters::Base
 
   public
   def filter(event)
-
+    exitstatus = @SUCCESS
     ##--- first check cache for provided uidNumber
     cached = false
     if @useCache
@@ -141,18 +141,22 @@ class LogStash::Filters::LDAPresolve < LogStash::Filters::Base
         end
         
         res = ldapsearch(conn, uidNumber)
+        user = res['user']
+        group = res['group']
+        login = res['login']
+        exitstatus = res['status']
+        errmsg = res['err']
 
         ##--- cache infos.
         cacheUID(@uidNumber, login, user, group)
     end 
 
     ##--- finaly change event to embed login, user and group information
-    event["user"] = res['user']
-    event["group"] = res['group']
-    event["login"] = res['login']
+    event["user"] = user
+    event["group"] = group
+    event["login"] = login
 
     ##--- add LDAPresolve exit tag, We can use this later to reparse+reindex logs if necessaryi.
-    exitstatus = res['status']
     if event["tags"] 
         event["tags"] << exitstatus
     else
