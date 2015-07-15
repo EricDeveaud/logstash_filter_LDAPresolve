@@ -1,4 +1,4 @@
-# Logstash Plugin
+# LDAPresolve Logstash Plugin
 
 This is a plugin for [Logstash](https://github.com/elasticsearch/logstash).
 
@@ -8,7 +8,7 @@ It is fully free and fully open source. The license is Apache 2.0, meaning you a
 
 LDAPresolve filter will add to the event the fields 'login', 'user' and 'group' based on LDAP request 
  with provided uidNumber information. 
- and add LDAP_OK on success, otherwise  error tag s added to the event
+ and add LDAP_OK tag on success, otherwise error tag 
     LDAP_ERR: some LDAP connection or schema error
     LDAP_UNK_USER: unknow uidNumber 
     LDAP_UNK_GROUP: unknow group 
@@ -103,6 +103,20 @@ LDAPresolve {
     groupdn    => "ou=groups,dc=somewhere,dc=org"
 }
 ```
+
+uidNumber can be dynamic and include parts of the event using the %{field} syntax.
+eg assume we have the uidNumber previously stored in the envent's field 'uid'
+We can then use 
+```sh
+LDAPresolve {
+    uidNumber  => "%{uid}"
+    host       => "ldap.somewhere.org"
+    userdn     => "ou=users,dc=somewhere,dc=org"
+    groupdn    => "ou=groups,dc=somewhere,dc=org"
+}
+
+```
+
 
 #### auxiliary arguments
 

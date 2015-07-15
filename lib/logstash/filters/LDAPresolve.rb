@@ -36,7 +36,7 @@ require "logstash/namespace"
 # [source, ruby] 
 # filter {
 #   LDAPresolve {
-#     uidNumber  => uidNumber to resolve
+#     uidNumber  => uidNumber to resolve, you can also use "%{field name}" syntax
 #     host       => "my.LDAP.Server" 
 #     userdn     => "Domain Name to search for users information"
 #     groupdn    => "Domain Name to search for group information"
@@ -123,24 +123,28 @@ class LogStash::Filters::LDAPresolve < LogStash::Filters::Base
 
   public
   def filter(event)
+    # extract uid value from event
+    uid2resolve = event.sprintf(@uidNumber)
+
+    #STDERR.puts "UID:#{uid2resolve}"
     exitstatus = @SUCCESS
     ##--- first check cache for provided uidNumber
     cached = false
     if @useCache
-        cached = cached?(@uidNumber) 
+        cached = cached?(uid2resolve) 
     end
 
     if cached
         login, user , group = cached
     else
-        @logger.info("prompt LDAP for #{@uidNumber} informations")
+        @logger.info("prompt LDAP for #{uid2resolve} informations")
         if use_ssl
             conn = LDAP::SSLConn.new(host=@host, port=@ldaps_port)
         else
             conn = LDAP::Conn.new(host=@host, port=@ldap_port)
         end
         
-        res = ldapsearch(conn, uidNumber)
+        res = ldapsearch(conn, uid2resolve)
         user = res['user']
         group = res['group']
         login = res['login']
@@ -148,7 +152,7 @@ class LogStash::Filters::LDAPresolve < LogStash::Filters::Base
         errmsg = res['err']
 
         ##--- cache infos.
-        cacheUID(@uidNumber, login, user, group)
+        cacheUID(uid2resolve, login, user, group)
     end 
 
     ##--- finaly change event to embed login, user and group information
@@ -206,7 +210,7 @@ class LogStash::Filters::LDAPresolve < LogStash::Filters::Base
     scope = LDAP::LDAP_SCOPE_SUBTREE 
     ##--- search LDAP for the user name
     begin
-        conn.search(@userdn, scope, "(& (objectclass=posixAccount) (uidNumber=#{@uidNumber}))", @userattrs) { |entry|
+        conn.search(@userdn, scope, "(& (objectclass=posixAccount) (uidNumber=#{uidNumber}))", @userattrs) { |entry|
             
             # convert entry object to hash for easier manipulation
             hashEntry = {}
