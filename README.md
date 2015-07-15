@@ -6,11 +6,11 @@ It is fully free and fully open source. The license is Apache 2.0, meaning you a
 
 ## Documentation
 
-LDAPresolve filter will add to the event the fields 'login', 'user' and 'group' based on LDAP request 
- with provided uidNumber information.  and add **LDAP_OK** tag on success, otherwise error tag 
-* **LDAP_ERR**: some LDAP connection or schema error
-* **LDAP_UNK_USER**: unknow uidNumber 
-* **LDAP_UNK_GROUP**: unknow group 
+LDAPresolve filter will add to the event the fields *login*, *user* and *group* based on LDAP request 
+ with provided uidNumber information.  and add *LDAP_OK* tag on success, otherwise error tag 
+* *LDAP_ERR*: some LDAP connection or schema error
+* *LDAP_UNK_USER*: unknow uidNumber 
+* *LDAP_UNK_GROUP*: unknow group 
 
  This filter useby default LDAPS but can be configure to use plain LDAP.
  you can select the protocol you want to use via the use_ssl config setting
